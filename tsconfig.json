@@ -1,0 +1,12 @@
+﻿{
+  "compilerOptions": {
+    "module": "ES6",
+    "target": "ESNext",
+    "sourceMap": true,
+    "strict": true,
+    "allowJs": true
+  },
+  "exclude": [
+    "node_modules"
+  ]
+}
