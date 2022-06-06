@@ -1,0 +1,45 @@
+{
+  "name": "@toneb/cszip",
+  "version": "0.1.0",
+  "description": "Tiny zip64 (de)compression library for browser, nodejs and deno.",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "typescript": "4.7.3",
+    "vite": "2.9.9"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/toneb/cszip.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "keywords": [
+    "zip",
+    "unzip",
+    "streaming",
+    "non-blocking",
+    "zip64",
+    "deflate",
+    "inflate",
+    "compression",
+    "decompression",
+    "browser",
+    "node.js",
+    "deno",
+    "tiny",
+    "pako",
+    "jszip",
+    "zip.js",
+    "conflux",
+    "client-zip",
+    "fflate",
+    "uzip.js"
+  ]
+}

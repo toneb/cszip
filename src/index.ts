@@ -22,24 +22,32 @@ const getDosDate = (date: Date) => ((date.getFullYear() - 1980) << 9) | ((date.g
 
 const isCompressionSupported = !!(window as any).CompressionStream && (() => { try { new CompressionStream("deflate-raw"); return true; } catch { return false } })();
 
-export class ZipWriter
-{
-    private readonly _writer: WritableStreamDefaultWriter;
+/**
+ * The zip file writer.
+ */
+export class ZipWriter {
+    private readonly _stream: WritableStream<BufferSource>
+    private readonly _writer: WritableStreamDefaultWriter<BufferSource>;
     private readonly _encoder = new TextEncoder();
     private _isOpenWriter = false;
     private _position = BigInt(0);
     private _entries: { name: Uint8Array, compressedSize: bigint, uncompressedSize: bigint, offset: bigint, crc32: number, isCompressed: boolean, lastModDate: Date }[] = [];
-    
-    constructor(stream: WritableStream<Uint8Array>) {
+
+    /**
+     * Creates new instance of zip writer.
+     * @param stream The output stream where data will be written.
+     */
+    constructor(stream: WritableStream<BufferSource>) {
+        this._stream = stream;
         this._writer = stream.getWriter();   
     }
 
     /**
-     * Adds new entry to zip file. Returns WritableStream which should be used to set entry data.
-     * @param name The file name.
+     * Adds new entry to zip file. Returns WritableStream which should be used to write entry data.
+     * @param name File name.
      * @param options Additional options.
      */
-    async addEntry(name: string, options?: { noCompression?: boolean, dateModified?: Date }): Promise<WritableStream> {
+    async addEntry(name: string, options?: { noCompression?: boolean, dateModified?: Date }): Promise<WritableStream<BufferSource>> {
         const isCompressed = options?.noCompression ? false : isCompressionSupported;
         const lastModDate = options?.dateModified ?? new Date();
         const encodedName = this._encoder.encode(name);
@@ -73,7 +81,7 @@ export class ZipWriter
         let uncompressedSize = BigInt(0);
         let compressedSize = BigInt(0);
         let crc = 0;
-        let compressWriter: WritableStreamDefaultWriter<Uint8Array> | null = null;
+        let compressWriter: WritableStreamDefaultWriter<BufferSource> | null = null;
         let compressReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
         
         if (isCompressed)
@@ -100,9 +108,9 @@ export class ZipWriter
         this._isOpenWriter = true;
         const self = this;
         
-        return new WritableStream<Uint8Array>({
+        return new WritableStream<BufferSource>({
             async write(chunk) {
-                uncompressedSize += BigInt(chunk.length);
+                uncompressedSize += BigInt(chunk.byteLength);
                 crc = rawCRC(chunk, crc);
                 
                 if (compressWriter)
@@ -151,7 +159,7 @@ export class ZipWriter
     }
 
     /**
-     * Finalizes zip file.
+     * Finalizes the file (writes entries) and closes output stream.
      */
     async close()
     {
@@ -215,5 +223,6 @@ export class ZipWriter
         
         await this._writer.write(endBuffer);
         await this._writer.releaseLock();
+        await this._stream.close();
     }
 }
