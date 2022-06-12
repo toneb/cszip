@@ -15,7 +15,8 @@
   },
   "scripts": {
     "test": "vitest",
-    "build": "npx tsc && npx vite build && npx dts-bundle-generator -o ./dist/cszip.d.ts ./src/index.ts"
+    "build": "npx tsc && npx vite build && npx dts-bundle-generator -o ./dist/cszip.d.ts ./src/index.ts",
+    "prepack": "npm run build"
   },
   "repository": {
     "type": "git",
