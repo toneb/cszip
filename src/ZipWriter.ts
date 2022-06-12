@@ -1,4 +1,6 @@
-﻿import { rawCRC } from "./crc32";
+﻿/// <reference path="./global.d.ts" />
+
+import { rawCRC } from "./crc32";
 import {
     endOfCentralDirectoryRecord,
     EndOfCentralDirectoryRecord, fileHeader,

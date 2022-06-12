@@ -47,7 +47,7 @@ const [
 
 // raw CRC function
 // stream by passing in previous CRC output as second parameter
-export const rawCRC = (d, c) => {
+export const rawCRC = (d: Uint8Array, c: number) => {
     // when second param not specified, defaults to ~0 = -1
     c = ~c;
     let i = 0;

@@ -5,7 +5,8 @@ module.exports = defineConfig({
     build: {
         lib: {
             entry: path.resolve(__dirname, 'build/index.js'),
-            name: 'cszip'
+            name: 'cszip',
+            formats: ["es"]
         },
         target: "esnext"
     }

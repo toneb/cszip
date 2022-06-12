@@ -4,12 +4,12 @@
     "target": "ESNext",
     "sourceMap": true,
     "strict": true,
-    "allowJs": true,
     "moduleResolution": "Node",
     "outDir": "build",
     "rootDir": "src",
     "skipLibCheck": true,
-    "removeComments": true
+    "removeComments": true,
+    "declaration": true
   },
   "include": ["src/**/*"]
 }
