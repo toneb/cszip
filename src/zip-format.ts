@@ -1,5 +1,28 @@
 ﻿// NOTE: not using classes for record representation, since classes poorly tree-shake/minify.  
 
+// Fixed length part and signatures
+export const enum FieldLength {
+    LocalFileHeader = 30,
+    DataDescriptor = 12,
+    Zip64DataDescriptor = 24,
+    FileHeader = 46,
+    Zip64EndOfCentralDirectoryRecord = 56,
+    Zip64EndOfCentralDirectoryLocator = 20,
+    EndOfCentralDirectoryRecord = 22,
+    Zip64ExtendedInformationExtraField = 4
+}
+
+export const enum Signature {
+    LocalFileHeader = 0x04034b50,
+    DataDescriptor = 0x08074b50,
+    Zip64DataDescriptor = 0x08074b50,
+    FileHeader = 0x02014b50,
+    Zip64EndOfCentralDirectoryRecord = 0x06064b50,
+    Zip64EndOfCentralDirectoryLocator = 0x07064b50,
+    EndOfCentralDirectoryRecord = 0x06054b50
+} 
+
+    
 // Local file header
 export interface ILocalFileHeader extends DataView {
     __dummy_ILocalFileHeader: boolean
@@ -18,12 +41,9 @@ export const enum LocalFileHeader {
     ExtraFieldLength = 28
 }
 
-export function localFileHeader(buffer: ArrayBuffer, byteOffset: number, init: boolean): ILocalFileHeader
-{
-    return zipRecord(buffer, byteOffset, init, localFileHeader.fixedLength, localFileHeader.signature) as ILocalFileHeader;
+export function localFileHeader(buffer: ArrayBuffer, byteOffset: number, init: boolean): ILocalFileHeader {
+    return zipRecord(buffer, byteOffset, init, FieldLength.LocalFileHeader, Signature.LocalFileHeader) as ILocalFileHeader;
 }
-localFileHeader.fixedLength = 30;
-localFileHeader.signature = 0x04034b50;
 
 
 // Data descriptor
@@ -37,12 +57,9 @@ export const enum DataDescriptor {
     UncompressedSize = 8
 }
 
-export function dataDescriptor(buffer: ArrayBuffer, byteOffset: number, init: boolean): IDataDescriptor
-{
-    return zipRecord(buffer, byteOffset, init, dataDescriptor.fixedLength, dataDescriptor.signature) as IDataDescriptor;
+export function dataDescriptor(buffer: ArrayBuffer, byteOffset: number, init: boolean): IDataDescriptor {
+    return zipRecord(buffer, byteOffset, init, FieldLength.DataDescriptor, Signature.DataDescriptor) as IDataDescriptor;
 }
-dataDescriptor.fixedLength = 12;
-dataDescriptor.signature = 0x08074b50;
 
 
 // zip64 data descriptor
@@ -57,10 +74,8 @@ export const enum Zip64DataDescriptor {
 }
 
 export function zip64DataDescriptor(buffer: ArrayBuffer, byteOffset: number, init: boolean) {
-    return zipRecord(buffer, byteOffset, init, dataDescriptor.fixedLength, zip64DataDescriptor.signature) as IZip64DataDescriptor;
+    return zipRecord(buffer, byteOffset, init, FieldLength.Zip64DataDescriptor, Signature.Zip64DataDescriptor) as IZip64DataDescriptor;
 }
-zip64DataDescriptor.fixedLength = 24;
-zip64DataDescriptor.signature = 0x08074b50;
 
 
 // File header
@@ -88,10 +103,8 @@ export const enum FileHeader {
 }
 
 export function fileHeader(buffer: ArrayBuffer, byteOffset: number, init: boolean) {
-    return zipRecord(buffer, byteOffset, init, fileHeader.fixedLength, fileHeader.signature) as IFileHeader;
+    return zipRecord(buffer, byteOffset, init, FieldLength.FileHeader, Signature.FileHeader) as IFileHeader;
 }
-fileHeader.fixedLength = 46;
-fileHeader.signature = 0x02014b50;
 
 
 // Zip64 end of central directory
@@ -112,10 +125,8 @@ export const enum Zip64EndOfCentralDirectoryRecord {
 }
 
 export function zip64EndOfCentralDirectoryRecord(buffer: ArrayBuffer, byteOffset: number, init: boolean) {
-    return zipRecord(buffer, byteOffset, init, zip64EndOfCentralDirectoryRecord.fixedLength, zip64EndOfCentralDirectoryRecord.signature) as IZip64EndOfCentralDirectoryRecord;
+    return zipRecord(buffer, byteOffset, init, FieldLength.Zip64EndOfCentralDirectoryRecord, Signature.Zip64EndOfCentralDirectoryRecord) as IZip64EndOfCentralDirectoryRecord;
 }
-zip64EndOfCentralDirectoryRecord.fixedLength = 56;
-zip64EndOfCentralDirectoryRecord.signature = 0x06064b50;
 
 
 // Zip64 end of central directory locator
@@ -130,10 +141,8 @@ export const enum Zip64EndOfCentralDirectoryLocator {
 }
 
 export function zip64EndOfCentralDirectoryLocator(buffer: ArrayBuffer, byteOffset: number, init: boolean) {
-    return zipRecord(buffer, byteOffset, init, zip64EndOfCentralDirectoryLocator.fixedLength, zip64EndOfCentralDirectoryLocator.signature) as IZip64EndOfCentralDirectoryLocator;
+    return zipRecord(buffer, byteOffset, init, FieldLength.Zip64EndOfCentralDirectoryLocator, Signature.Zip64EndOfCentralDirectoryLocator) as IZip64EndOfCentralDirectoryLocator;
 }
-zip64EndOfCentralDirectoryLocator.fixedLength = 20;
-zip64EndOfCentralDirectoryLocator.signature = 0x07064b50;
 
 
 // End of central directory record
@@ -152,10 +161,8 @@ export const enum EndOfCentralDirectoryRecord {
 }
 
 export function endOfCentralDirectoryRecord(buffer: ArrayBuffer, byteOffset: number, init: boolean) {
-    return zipRecord(buffer, byteOffset, init, endOfCentralDirectoryRecord.fixedLength, endOfCentralDirectoryRecord.signature) as IEndOfCentralDirectoryRecord;
+    return zipRecord(buffer, byteOffset, init, FieldLength.EndOfCentralDirectoryRecord, Signature.EndOfCentralDirectoryRecord) as IEndOfCentralDirectoryRecord;
 }
-endOfCentralDirectoryRecord.fixedLength = 22;
-endOfCentralDirectoryRecord.signature = 0x06054b50;
 
 
 // Zip64 extended information extra field
@@ -167,21 +174,20 @@ export const enum Zip64ExtendedInformationExtraField {
     Size = 2
 }
 
+export const zip64ExtendedInformationExtraFieldSignatureTag = 0x0001;
 export function zip64ExtendedInformationExtraField(buffer: ArrayBuffer, byteOffset: number, init: boolean) {
-    const data = zipRecord(buffer, byteOffset, init, zip64ExtendedInformationExtraField.fixedLength);
+    const data = zipRecord(buffer, byteOffset, init, FieldLength.Zip64ExtendedInformationExtraField);
 
     // init header if requested
     if (init)
-        setUint16(data as any, 0, zip64ExtendedInformationExtraField.tag);
+        setUint16(data as any, 0, zip64ExtendedInformationExtraFieldSignatureTag);
 
     // validate otherwise
-    if (!init && getUint16(data as any, 0) !== zip64ExtendedInformationExtraField.tag)
+    if (!init && getUint16(data as any, 0) !== zip64ExtendedInformationExtraFieldSignatureTag)
         throw new Error("Extra field tag is not matching data tag");
     
     return data as IZip64ExtendedInformationExtraField;
 }
-zip64ExtendedInformationExtraField.fixedLength = 4;
-zip64ExtendedInformationExtraField.tag = 0x0001;
 
 
 // helpers
@@ -239,7 +245,7 @@ export function setBigUint64(data: DataView, byteOffset: number, value: bigint) 
     data.setBigUint64(byteOffset, value, true);
 }
 
-function zipRecord(buffer: ArrayBuffer, byteOffset: number, init: boolean, fixedLength: number, signature?: number)
+function zipRecord(buffer: ArrayBuffer, byteOffset: number, init: boolean, fixedLength: FieldLength, signature?: Signature)
 {
     if (buffer.byteLength < fixedLength)
         throw new Error("Buffer to short");

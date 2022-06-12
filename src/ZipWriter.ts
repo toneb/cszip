@@ -2,7 +2,7 @@
 import {
     endOfCentralDirectoryRecord,
     EndOfCentralDirectoryRecord, fileHeader,
-    FileHeader,
+    FileHeader, FieldLength,
     localFileHeader,
     LocalFileHeader, setBigUint64, setUint16, setUint32, zip64DataDescriptor,
     Zip64DataDescriptor, zip64EndOfCentralDirectoryLocator,
@@ -62,7 +62,7 @@ export class ZipWriter {
             throw new Error("Previous entry needs to be closed before new entry can be added.");
 
         // create header
-        const headerBuffer = new ArrayBuffer(localFileHeader.fixedLength + encodedName.length + zip64ExtendedInformationExtraField.fixedLength);
+        const headerBuffer = new ArrayBuffer(FieldLength.LocalFileHeader + encodedName.length + FieldLength.Zip64ExtendedInformationExtraField);
 
         const localHeader = localFileHeader(headerBuffer, 0, true);
         setUint16(localHeader, LocalFileHeader.VersionNeededToExtract, zipVersion);
@@ -71,11 +71,11 @@ export class ZipWriter {
         setUint16(localHeader, LocalFileHeader.LastModFileTime, getDosTime(lastModDate));
         setUint16(localHeader, LocalFileHeader.LastModFileDate, getDosDate(lastModDate));
         setUint16(localHeader, LocalFileHeader.FileNameLength, encodedName.length);
-        setUint16(localHeader, LocalFileHeader.ExtraFieldLength, zip64ExtendedInformationExtraField.fixedLength);
+        setUint16(localHeader, LocalFileHeader.ExtraFieldLength, FieldLength.Zip64ExtendedInformationExtraField);
 
-        new Uint8Array(headerBuffer).set(encodedName, localFileHeader.fixedLength);
+        new Uint8Array(headerBuffer).set(encodedName, FieldLength.LocalFileHeader);
 
-        const zip64ExtendedInfo = zip64ExtendedInformationExtraField(headerBuffer, localFileHeader.fixedLength + encodedName.length, true);
+        const zip64ExtendedInfo = zip64ExtendedInformationExtraField(headerBuffer, FieldLength.LocalFileHeader + encodedName.length, true);
         setUint16(zip64ExtendedInfo, Zip64ExtendedInformationExtraField.Size, 0);
 
         // write header
@@ -138,7 +138,7 @@ export class ZipWriter {
                     crc = crc + 0x1_0000_0000;
 
                 // create data descriptor
-                const descriptorBuffer = new ArrayBuffer(zip64DataDescriptor.fixedLength);
+                const descriptorBuffer = new ArrayBuffer(FieldLength.Zip64DataDescriptor);
                 const descriptor = zip64DataDescriptor(descriptorBuffer, 0, true);
                 setUint32(descriptor, Zip64DataDescriptor.Crc32, crc);
                 setBigUint64(descriptor, Zip64DataDescriptor.CompressedSize, compressedSize);
@@ -182,7 +182,7 @@ export class ZipWriter {
         for (const entry of this._entries)
         {
             // build header
-            const headerBuffer = new ArrayBuffer(fileHeader.fixedLength + entry.name.length + zip64ExtendedInformationExtraField.fixedLength + 24 /* zip64 extra field compressed size, uncompressed size, and offset */);
+            const headerBuffer = new ArrayBuffer(FieldLength.FileHeader + entry.name.length + FieldLength.Zip64ExtendedInformationExtraField + 24 /* zip64 extra field compressed size, uncompressed size, and offset */);
             const header = fileHeader(headerBuffer, 0, true);
             setUint16(header, FileHeader.VersionMadeBy, zipVersion);
             setUint16(header, FileHeader.VersionNeededToExtract, zipVersion);
@@ -194,14 +194,14 @@ export class ZipWriter {
             setUint32(header, FileHeader.UncompressedSize, 0xFFFFFFFF); // will be set in zip64 extended info
             setUint32(header, FileHeader.CompressedSize,  0xFFFFFFFF); // will be set in zip64 extended info
             setUint16(header, FileHeader.FileNameLength, entry.name.length);
-            setUint16(header, FileHeader.ExtraFieldLength, zip64ExtendedInformationExtraField.fixedLength + 24);
+            setUint16(header, FileHeader.ExtraFieldLength, FieldLength.Zip64ExtendedInformationExtraField + 24);
             setUint32(header, FileHeader.RelativeOffsetOfLocalHeader, 0xFFFFFFFF); // will be set in zip64 extended info
 
-            new Uint8Array(headerBuffer).set(entry.name, fileHeader.fixedLength);
+            new Uint8Array(headerBuffer).set(entry.name, FieldLength.FileHeader);
 
-            const zip64ExtendedInfo = zip64ExtendedInformationExtraField(headerBuffer, fileHeader.fixedLength + entry.name.length, true);
+            const zip64ExtendedInfo = zip64ExtendedInformationExtraField(headerBuffer, FieldLength.FileHeader + entry.name.length, true);
             setUint16(zip64ExtendedInfo, Zip64ExtendedInformationExtraField.Size, 24);
-            const additionalData = new DataView(headerBuffer, fileHeader.fixedLength + entry.name.length + zip64ExtendedInformationExtraField.fixedLength);
+            const additionalData = new DataView(headerBuffer, FieldLength.FileHeader + entry.name.length + FieldLength.Zip64ExtendedInformationExtraField);
             additionalData.setBigUint64(0, entry.uncompressedSize, true);
             additionalData.setBigUint64(8, entry.compressedSize, true);
             additionalData.setBigUint64(16, entry.offset, true);
@@ -211,9 +211,9 @@ export class ZipWriter {
             centralDirectorySize += BigInt(headerBuffer.byteLength);
         }
 
-        const endBuffer = new ArrayBuffer(zip64EndOfCentralDirectoryRecord.fixedLength + zip64EndOfCentralDirectoryLocator.fixedLength + endOfCentralDirectoryRecord.fixedLength);
+        const endBuffer = new ArrayBuffer(FieldLength.Zip64EndOfCentralDirectoryRecord + FieldLength.Zip64EndOfCentralDirectoryLocator + FieldLength.EndOfCentralDirectoryRecord);
         const zip64endRecord = zip64EndOfCentralDirectoryRecord(endBuffer, 0, true);
-        setBigUint64(zip64endRecord, Zip64EndOfCentralDirectoryRecord.SizeOfZip64EndOfCentralDirectoryRecord, BigInt(zip64EndOfCentralDirectoryRecord.fixedLength - 12));
+        setBigUint64(zip64endRecord, Zip64EndOfCentralDirectoryRecord.SizeOfZip64EndOfCentralDirectoryRecord, BigInt(FieldLength.Zip64EndOfCentralDirectoryRecord - 12));
         setUint16(zip64endRecord, Zip64EndOfCentralDirectoryRecord.VersionMadeBy, zipVersion);
         setUint16(zip64endRecord, Zip64EndOfCentralDirectoryRecord.VersionNeededToExtract, zipVersion);
         setBigUint64(zip64endRecord, Zip64EndOfCentralDirectoryRecord.TotalNumberOfEntriesInTheCentralDirectoryOnThisDisk, BigInt(this._entries.length));
@@ -221,11 +221,11 @@ export class ZipWriter {
         setBigUint64(zip64endRecord, Zip64EndOfCentralDirectoryRecord.SizeOfTheCentralDirectory, centralDirectorySize);
         setBigUint64(zip64endRecord, Zip64EndOfCentralDirectoryRecord.OffsetOfStartOfCentralDirectoryWithRespectToTheStartingDiskNumber, this._position);
 
-        const zip64EndLocator = zip64EndOfCentralDirectoryLocator(endBuffer, zip64EndOfCentralDirectoryRecord.fixedLength, true);
+        const zip64EndLocator = zip64EndOfCentralDirectoryLocator(endBuffer, FieldLength.Zip64EndOfCentralDirectoryRecord, true);
         setBigUint64(zip64EndLocator, Zip64EndOfCentralDirectoryLocator.RelativeOffsetOfTheZip64EndOfCentralDirectoryRecord, this._position + centralDirectorySize);
         setUint32(zip64EndLocator, Zip64EndOfCentralDirectoryLocator.TotalNumberOfDisks, 1);
 
-        const endRecord = endOfCentralDirectoryRecord(endBuffer, zip64EndOfCentralDirectoryRecord.fixedLength + zip64EndOfCentralDirectoryLocator.fixedLength, true);
+        const endRecord = endOfCentralDirectoryRecord(endBuffer, FieldLength.Zip64EndOfCentralDirectoryRecord + FieldLength.Zip64EndOfCentralDirectoryLocator, true);
         setUint16(endRecord, EndOfCentralDirectoryRecord.TotalNumberOfEntriesInTheCentralDirectoryOnThisDisk, 0xFFFFFFFF); // is set in zip64 end record
         setUint16(endRecord, EndOfCentralDirectoryRecord.TotalNumberOfEntriesInTheCentralDirectory, 0xFFFFFFFF); // is set in zip64 end record
         setUint32(endRecord, EndOfCentralDirectoryRecord.SizeOfTheCentralDirectory, 0xFFFFFFFF); // is set in zip64 end record
