@@ -13,7 +13,8 @@
     "vitest": "^0.14.2"
   },
   "scripts": {
-    "test": "vitest"
+    "test": "vitest",
+    "build": "npx tsc && npx vite build"
   },
   "repository": {
     "type": "git",

@@ -1,257 +1,258 @@
-﻿
-class ZipRecord {
-    protected readonly _data;
+﻿// NOTE: not using classes for record representation, since classes poorly tree-shake/minify.  
+
+// Local file header
+export interface ILocalFileHeader extends DataView {
+    __dummy_ILocalFileHeader: boolean
+}
+
+export const enum LocalFileHeader {
+    VersionNeededToExtract = 4,
+    GeneralPurposeBitFlag = 6,
+    CompressionMethod = 8,
+    LastModFileTime = 10,
+    LastModFileDate = 12,
+    Crc32 = 14,
+    CompressedSize = 18,
+    UncompressedSize = 22,
+    FileNameLength = 26,
+    ExtraFieldLength = 28
+}
+
+export function localFileHeader(buffer: ArrayBuffer, byteOffset: number, init: boolean): ILocalFileHeader
+{
+    return zipRecord(buffer, byteOffset, init, localFileHeader.fixedLength, localFileHeader.signature) as ILocalFileHeader;
+}
+localFileHeader.fixedLength = 30;
+localFileHeader.signature = 0x04034b50;
+
+
+// Data descriptor
+export interface IDataDescriptor extends DataView {
+    __dummy_IDataDescriptor: boolean
+}
+
+export const enum DataDescriptor {
+    Crc32 = 0,
+    CompressedSize = 4,
+    UncompressedSize = 8
+}
+
+export function dataDescriptor(buffer: ArrayBuffer, byteOffset: number, init: boolean): IDataDescriptor
+{
+    return zipRecord(buffer, byteOffset, init, dataDescriptor.fixedLength, dataDescriptor.signature) as IDataDescriptor;
+}
+dataDescriptor.fixedLength = 12;
+dataDescriptor.signature = 0x08074b50;
+
+
+// zip64 data descriptor
+export interface IZip64DataDescriptor extends DataView {
+    __dummy_IZip64DataDescriptor: boolean
+}
+
+export const enum Zip64DataDescriptor {
+    Crc32 = 0,
+    CompressedSize = 4,
+    UncompressedSize = 12
+}
+
+export function zip64DataDescriptor(buffer: ArrayBuffer, byteOffset: number, init: boolean) {
+    return zipRecord(buffer, byteOffset, init, dataDescriptor.fixedLength, zip64DataDescriptor.signature) as IZip64DataDescriptor;
+}
+zip64DataDescriptor.fixedLength = 24;
+zip64DataDescriptor.signature = 0x08074b50;
+
+
+// File header
+export interface IFileHeader extends DataView {
+    __dummy_IFileHeader: boolean
+}
+
+export const enum FileHeader {
+    VersionMadeBy = 4,
+    VersionNeededToExtract = 6,
+    GeneralPurposeBitFlag = 8,
+    CompressionMethod = 10,
+    LastModFileTime = 12,
+    LastModFileDate = 14,
+    Crc32 = 16,
+    CompressedSize = 20,
+    UncompressedSize = 24,
+    FileNameLength = 28,
+    ExtraFieldLength = 30,
+    FileCommentLength = 32,
+    DiskNumberStart = 34,
+    InternalFileAttributes = 36,
+    ExternalFileAttributes = 38,
+    RelativeOffsetOfLocalHeader = 42
+}
+
+export function fileHeader(buffer: ArrayBuffer, byteOffset: number, init: boolean) {
+    return zipRecord(buffer, byteOffset, init, fileHeader.fixedLength, fileHeader.signature) as IFileHeader;
+}
+fileHeader.fixedLength = 46;
+fileHeader.signature = 0x02014b50;
+
+
+// Zip64 end of central directory
+export interface IZip64EndOfCentralDirectoryRecord extends DataView {
+    __dummy_IZip64EndOfCentralDirectoryRecord: boolean
+}
+
+export const enum Zip64EndOfCentralDirectoryRecord {
+    SizeOfZip64EndOfCentralDirectoryRecord = 4,
+    VersionMadeBy = 12,
+    VersionNeededToExtract = 14,
+    NumberOfThisDisk = 16,
+    NumberOfThisDiskWithTheStartOfCentralDirectory = 20,
+    TotalNumberOfEntriesInTheCentralDirectoryOnThisDisk = 24,
+    TotalNumberOfEntriesInTheCentralDirectory = 32,
+    SizeOfTheCentralDirectory = 40,
+    OffsetOfStartOfCentralDirectoryWithRespectToTheStartingDiskNumber = 48
+}
+
+export function zip64EndOfCentralDirectoryRecord(buffer: ArrayBuffer, byteOffset: number, init: boolean) {
+    return zipRecord(buffer, byteOffset, init, zip64EndOfCentralDirectoryRecord.fixedLength, zip64EndOfCentralDirectoryRecord.signature) as IZip64EndOfCentralDirectoryRecord;
+}
+zip64EndOfCentralDirectoryRecord.fixedLength = 56;
+zip64EndOfCentralDirectoryRecord.signature = 0x06064b50;
+
+
+// Zip64 end of central directory locator
+export interface IZip64EndOfCentralDirectoryLocator extends DataView {
+    __dummy_IZip64EndOfCentralDirectoryLocator: boolean
+}
+
+export const enum Zip64EndOfCentralDirectoryLocator {
+    NumberOfTheDiskWithTheStartOfTheZip64EndOfCentralDirectory = 4,
+    RelativeOffsetOfTheZip64EndOfCentralDirectoryRecord = 8,
+    TotalNumberOfDisks = 16
+}
+
+export function zip64EndOfCentralDirectoryLocator(buffer: ArrayBuffer, byteOffset: number, init: boolean) {
+    return zipRecord(buffer, byteOffset, init, zip64EndOfCentralDirectoryLocator.fixedLength, zip64EndOfCentralDirectoryLocator.signature) as IZip64EndOfCentralDirectoryLocator;
+}
+zip64EndOfCentralDirectoryLocator.fixedLength = 20;
+zip64EndOfCentralDirectoryLocator.signature = 0x07064b50;
+
+
+// End of central directory record
+export interface IEndOfCentralDirectoryRecord extends DataView {
+    __dummy_IEndOfCentralDirectoryRecord: boolean
+}
+
+export const enum EndOfCentralDirectoryRecord {
+    NumberOfThisDisk = 4,
+    NumberOfThisDiskWithTheStartOfCentralDirectory = 6,
+    TotalNumberOfEntriesInTheCentralDirectoryOnThisDisk = 8,
+    TotalNumberOfEntriesInTheCentralDirectory = 10,
+    SizeOfTheCentralDirectory = 12,
+    OffsetOfStartOfCentralDirectoryWithRespectToTheStartingDiskNumber = 16,
+    ZipFileCommentLength = 20
+}
+
+export function endOfCentralDirectoryRecord(buffer: ArrayBuffer, byteOffset: number, init: boolean) {
+    return zipRecord(buffer, byteOffset, init, endOfCentralDirectoryRecord.fixedLength, endOfCentralDirectoryRecord.signature) as IEndOfCentralDirectoryRecord;
+}
+endOfCentralDirectoryRecord.fixedLength = 22;
+endOfCentralDirectoryRecord.signature = 0x06054b50;
+
+
+// Zip64 extended information extra field
+export interface IZip64ExtendedInformationExtraField extends DataView {
+    __dummy_IZip64ExtendedInformationExtraField: boolean
+}
+
+export const enum Zip64ExtendedInformationExtraField {
+    Size = 2
+}
+
+export function zip64ExtendedInformationExtraField(buffer: ArrayBuffer, byteOffset: number, init: boolean) {
+    const data = zipRecord(buffer, byteOffset, init, zip64ExtendedInformationExtraField.fixedLength);
+
+    // init header if requested
+    if (init)
+        setUint16(data as any, 0, zip64ExtendedInformationExtraField.tag);
+
+    // validate otherwise
+    if (!init && getUint16(data as any, 0) !== zip64ExtendedInformationExtraField.tag)
+        throw new Error("Extra field tag is not matching data tag");
     
-    constructor(buffer: ArrayBuffer, byteOffset: number, init: boolean, fixedLength: number, signature?: number)
-    {
-        if (buffer.byteLength < fixedLength)
-            throw new Error("Buffer to short");
+    return data as IZip64ExtendedInformationExtraField;
+}
+zip64ExtendedInformationExtraField.fixedLength = 4;
+zip64ExtendedInformationExtraField.tag = 0x0001;
 
-        this._data = new DataView(buffer, byteOffset);
 
-        // init header if requested
-        if (init && signature)
-            this._data.setUint32(0, signature, true);
-
-        // validate otherwise
-        if (!init && signature && this._data.getUint32(0, true) !== signature)
-            throw new Error("Data signature is not matching data type");
-    }
+// helpers
+export function getUint16(data: IZip64ExtendedInformationExtraField, byteOffset: Zip64ExtendedInformationExtraField.Size): number;
+export function getUint16(data: IEndOfCentralDirectoryRecord, byteOffset: EndOfCentralDirectoryRecord.NumberOfThisDisk | EndOfCentralDirectoryRecord.NumberOfThisDiskWithTheStartOfCentralDirectory | EndOfCentralDirectoryRecord.TotalNumberOfEntriesInTheCentralDirectoryOnThisDisk | EndOfCentralDirectoryRecord.TotalNumberOfEntriesInTheCentralDirectory | EndOfCentralDirectoryRecord.ZipFileCommentLength): number;
+export function getUint16(data: IZip64EndOfCentralDirectoryRecord, byteOffset: Zip64EndOfCentralDirectoryRecord.VersionMadeBy | Zip64EndOfCentralDirectoryRecord.VersionNeededToExtract): number;
+export function getUint16(data: IFileHeader, byteOffset: FileHeader.VersionMadeBy | FileHeader.VersionNeededToExtract | FileHeader.GeneralPurposeBitFlag | FileHeader.CompressionMethod | FileHeader.LastModFileTime | FileHeader.LastModFileDate | FileHeader.FileNameLength | FileHeader.ExtraFieldLength | FileHeader.FileCommentLength | FileHeader.DiskNumberStart | FileHeader.InternalFileAttributes): number;
+export function getUint16(data: ILocalFileHeader, byteOffset: LocalFileHeader.VersionNeededToExtract | LocalFileHeader.GeneralPurposeBitFlag | LocalFileHeader.CompressionMethod | LocalFileHeader.LastModFileTime | LocalFileHeader.LastModFileDate | LocalFileHeader.FileNameLength | LocalFileHeader.ExtraFieldLength): number;
+export function getUint16(data: DataView, byteOffset: number) {
+    return data.getUint16(byteOffset, true);
 }
 
-export class LocalFileHeader extends ZipRecord {
-    static readonly fixedLength = 30;
-    static readonly signature = 0x04034b50;
-
-    constructor(buffer: ArrayBuffer, byteOffset: number, init: boolean) {
-        super(buffer, byteOffset, init, LocalFileHeader.fixedLength, LocalFileHeader.signature);
-    }
-
-    get versionNeededToExtract() { return this._data.getUint16(4, true); }
-    set versionNeededToExtract(value: number) { this._data.setUint16(4, value, true); }
-
-    get generalPurposeBitFlag() { return this._data.getUint16(6, true); }
-    set generalPurposeBitFlag(value: number) { this._data.setUint16(6, value, true); }
-
-    get compressionMethod() { return this._data.getUint16(8, true); }
-    set compressionMethod(value: number) { this._data.setUint16(8, value, true); }
-
-    get lastModFileTime() { return this._data.getUint16(10, true); }
-    set lastModFileTime(value: number) { this._data.setUint16(10, value, true); }
-
-    get lastModFileDate() { return this._data.getUint16(12, true); }
-    set lastModFileDate(value: number) { this._data.setUint16(12, value, true); }
-
-    get crc32() { return this._data.getUint32(14, true); }
-    set crc32(value: number){ this._data.setUint32(14, value, true); }
-
-    get compressedSize() { return this._data.getUint32(18, true); }
-    set compressedSize(value: number) { this._data.setUint32(18, value, true); }
-
-    get uncompressedSize() { return this._data.getUint32(22, true); }
-    set uncompressedSize(value: number) { this._data.setUint32(22, value, true); }
-
-    get fileNameLength() { return this._data.getUint16(26, true); }
-    set fileNameLength(value: number) { this._data.setUint16(26, value, true); }
-
-    get extraFieldLength() { return this._data.getUint16(28, true); }
-    set extraFieldLength(value: number) { this._data.setUint16(28, value, true); }
+export function setUint16(data: IZip64ExtendedInformationExtraField, byteOffset: Zip64ExtendedInformationExtraField.Size, value: number): void;
+export function setUint16(data: IEndOfCentralDirectoryRecord, byteOffset: EndOfCentralDirectoryRecord.NumberOfThisDisk | EndOfCentralDirectoryRecord.NumberOfThisDiskWithTheStartOfCentralDirectory | EndOfCentralDirectoryRecord.TotalNumberOfEntriesInTheCentralDirectoryOnThisDisk | EndOfCentralDirectoryRecord.TotalNumberOfEntriesInTheCentralDirectory | EndOfCentralDirectoryRecord.ZipFileCommentLength, value: number): void;
+export function setUint16(data: IZip64EndOfCentralDirectoryRecord, byteOffset: Zip64EndOfCentralDirectoryRecord.VersionMadeBy | Zip64EndOfCentralDirectoryRecord.VersionNeededToExtract, value: number): void;
+export function setUint16(data: IFileHeader, byteOffset: FileHeader.VersionMadeBy | FileHeader.VersionNeededToExtract | FileHeader.GeneralPurposeBitFlag | FileHeader.CompressionMethod | FileHeader.LastModFileTime | FileHeader.LastModFileDate | FileHeader.FileNameLength | FileHeader.ExtraFieldLength | FileHeader.FileCommentLength | FileHeader.DiskNumberStart | FileHeader.InternalFileAttributes, value: number): void;
+export function setUint16(data: ILocalFileHeader, byteOffset: LocalFileHeader.VersionNeededToExtract | LocalFileHeader.GeneralPurposeBitFlag | LocalFileHeader.CompressionMethod | LocalFileHeader.LastModFileTime | LocalFileHeader.LastModFileDate | LocalFileHeader.FileNameLength | LocalFileHeader.ExtraFieldLength, value: number): void;
+export function setUint16(data: DataView, byteOffset: number, value: number) {
+    return data.setUint16(byteOffset, value, true);
 }
 
-export class DataDescriptor extends ZipRecord {
-    static readonly fixedLength = 12;
-    static readonly signature = 0x08074b50;
-
-    constructor(buffer: ArrayBuffer, byteOffset: number, init: boolean) {
-        super(buffer, byteOffset, init, DataDescriptor.fixedLength, DataDescriptor.signature);
-    }
-
-    get crc32() { return this._data.getUint32(0, true); }
-    set crc32(value: number) { this._data.setUint32(0, value, true); }
-
-    get compressedSize() { return this._data.getUint32(4, true); }
-    set compressedSize(value: number) { this._data.setUint32(4, value, true); }
-
-    get uncompressedSize() { return this._data.getUint32(8, true); }
-    set uncompressedSize(value: number) { this._data.setUint32(8, value, true); }
+export function getUint32(data: IEndOfCentralDirectoryRecord, byteOffset: EndOfCentralDirectoryRecord.SizeOfTheCentralDirectory | EndOfCentralDirectoryRecord.OffsetOfStartOfCentralDirectoryWithRespectToTheStartingDiskNumber): number;
+export function getUint32(data: IZip64EndOfCentralDirectoryLocator, byteOffset: Zip64EndOfCentralDirectoryLocator.NumberOfTheDiskWithTheStartOfTheZip64EndOfCentralDirectory | Zip64EndOfCentralDirectoryLocator.TotalNumberOfDisks): number;
+export function getUint32(data: IZip64EndOfCentralDirectoryRecord, byteOffset: Zip64EndOfCentralDirectoryRecord.NumberOfThisDisk | Zip64EndOfCentralDirectoryRecord.NumberOfThisDiskWithTheStartOfCentralDirectory): number;
+export function getUint32(data: IFileHeader, byteOffset: FileHeader.Crc32 | FileHeader.CompressedSize | FileHeader.UncompressedSize | FileHeader.ExternalFileAttributes | FileHeader.RelativeOffsetOfLocalHeader): number;
+export function getUint32(data: IZip64DataDescriptor, byteOffset: Zip64DataDescriptor.Crc32): number;
+export function getUint32(data: ILocalFileHeader, byteOffset: LocalFileHeader.Crc32 | LocalFileHeader.CompressedSize | LocalFileHeader.UncompressedSize): number;
+export function getUint32(data: IDataDescriptor, byteOffset: DataDescriptor.Crc32 | DataDescriptor.CompressedSize | DataDescriptor.UncompressedSize): number;
+export function getUint32(data: DataView, byteOffset: number) {
+    return data.getUint32(byteOffset, true);
 }
 
-export class Zip64DataDescriptor extends ZipRecord {
-    static readonly fixedLength = 24;
-    static readonly signature = 0x08074b50;
-
-    constructor(buffer: ArrayBuffer, byteOffset: number, init: boolean) {
-        super(buffer, byteOffset, init, Zip64DataDescriptor.fixedLength, Zip64DataDescriptor.signature);
-    }
-
-    get crc32() { return this._data.getUint32(0, true); }
-    set crc32(value: number) { this._data.setUint32(0, value, true); }
-
-    get compressedSize() { return this._data.getBigUint64(4, true); }
-    set compressedSize(value: bigint) { this._data.setBigUint64(4, value, true); }
-
-    get uncompressedSize() { return this._data.getBigUint64(12, true); }
-    set uncompressedSize(value: bigint) { this._data.setBigUint64(12, value, true); }
+export function setUint32(data: IEndOfCentralDirectoryRecord, byteOffset: EndOfCentralDirectoryRecord.SizeOfTheCentralDirectory | EndOfCentralDirectoryRecord.OffsetOfStartOfCentralDirectoryWithRespectToTheStartingDiskNumber, value: number): void;
+export function setUint32(data: IZip64EndOfCentralDirectoryLocator, byteOffset: Zip64EndOfCentralDirectoryLocator.NumberOfTheDiskWithTheStartOfTheZip64EndOfCentralDirectory | Zip64EndOfCentralDirectoryLocator.TotalNumberOfDisks, value: number): void;
+export function setUint32(data: IZip64EndOfCentralDirectoryRecord, byteOffset: Zip64EndOfCentralDirectoryRecord.NumberOfThisDisk | Zip64EndOfCentralDirectoryRecord.NumberOfThisDiskWithTheStartOfCentralDirectory, value: number): void;
+export function setUint32(data: IFileHeader, byteOffset: FileHeader.Crc32 | FileHeader.CompressedSize | FileHeader.UncompressedSize | FileHeader.ExternalFileAttributes | FileHeader.RelativeOffsetOfLocalHeader, value: number): void;
+export function setUint32(data: IZip64DataDescriptor, byteOffset: Zip64DataDescriptor.Crc32, value: number): void;
+export function setUint32(data: ILocalFileHeader, byteOffset: LocalFileHeader.Crc32 | LocalFileHeader.CompressedSize | LocalFileHeader.UncompressedSize, value: number): void;
+export function setUint32(data: IDataDescriptor, byteOffset: DataDescriptor.Crc32 | DataDescriptor.CompressedSize | DataDescriptor.UncompressedSize, value: number): void;
+export function setUint32(data: DataView, byteOffset: number, value: number) {
+    data.setUint32(byteOffset, value, true);
 }
 
-export class FileHeader extends ZipRecord {
-    static readonly fixedLength = 46;
-    static readonly signature = 0x02014b50;
-
-    constructor(buffer: ArrayBuffer, byteOffset: number, init: boolean) {
-        super(buffer, byteOffset, init, FileHeader.fixedLength, FileHeader.signature);
-    }
-
-    get versionMadeBy() { return this._data.getUint16(4, true); }
-    set versionMadeBy(value: number) { this._data.setUint16(4, value, true); }
-
-    get versionNeededToExtract() { return this._data.getUint16(6, true); }
-    set versionNeededToExtract(value: number) { this._data.setUint16(6, value, true); }
-
-    get generalPurposeBitFlag() { return this._data.getUint16(8, true); }
-    set generalPurposeBitFlag(value: number) { this._data.setUint16(8, value, true); }
-
-    get compressionMethod() { return this._data.getUint16(10, true); }
-    set compressionMethod(value: number) { this._data.setUint16(10, value, true); }
-
-    get lastModFileTime() { return this._data.getUint16(12, true); }
-    set lastModFileTime(value: number) { this._data.setUint16(12, value, true); }
-
-    get lastModFileDate() { return this._data.getUint16(14, true); }
-    set lastModFileDate(value: number) { this._data.setUint16(14, value, true); }
-
-    get crc32() { return this._data.getUint32(16, true); }
-    set crc32(value: number){ this._data.setUint32(16, value, true); }
-
-    get compressedSize() { return this._data.getUint32(20, true); }
-    set compressedSize(value: number) { this._data.setUint32(20, value, true); }
-
-    get uncompressedSize() { return this._data.getUint32(24, true); }
-    set uncompressedSize(value: number) { this._data.setUint32(24, value, true); }
-
-    get fileNameLength() { return this._data.getUint16(28, true); }
-    set fileNameLength(value: number) { this._data.setUint16(28, value, true); }
-
-    get extraFieldLength() { return this._data.getUint16(30, true); }
-    set extraFieldLength(value: number) { this._data.setUint16(30, value, true); }
-
-    get fileCommentLength() { return this._data.getUint16(32, true); }
-    set fileCommentLength(value: number) { this._data.setUint16(32, value, true); }
-
-    get diskNumberStart() { return this._data.getUint16(34, true); }
-    set diskNumberStart(value: number) { this._data.setUint16(34, value, true); }
-
-    get internalFileAttributes() { return this._data.getUint16(36, true); }
-    set internalFileAttributes(value: number) { this._data.setUint16(36, value, true); }
-
-    get externalFileAttributes() { return this._data.getUint32(38, true); }
-    set externalFileAttributes(value: number) { this._data.setUint32(38, value, true); }
-
-    get relativeOffsetOfLocalHeader() { return this._data.getUint32(42, true); }
-    set relativeOffsetOfLocalHeader(value: number) { this._data.setUint32(42, value, true); }
+export function getBigUint64(data: IZip64EndOfCentralDirectoryLocator, byteOffset: Zip64EndOfCentralDirectoryLocator.RelativeOffsetOfTheZip64EndOfCentralDirectoryRecord): bigint;
+export function getBigUint64(data: IZip64EndOfCentralDirectoryRecord, byteOffset: Zip64EndOfCentralDirectoryRecord.SizeOfZip64EndOfCentralDirectoryRecord | Zip64EndOfCentralDirectoryRecord.TotalNumberOfEntriesInTheCentralDirectoryOnThisDisk | Zip64EndOfCentralDirectoryRecord.TotalNumberOfEntriesInTheCentralDirectory | Zip64EndOfCentralDirectoryRecord.SizeOfTheCentralDirectory | Zip64EndOfCentralDirectoryRecord.OffsetOfStartOfCentralDirectoryWithRespectToTheStartingDiskNumber): bigint;
+export function getBigUint64(data: IZip64DataDescriptor, byteOffset: Zip64DataDescriptor.CompressedSize | Zip64DataDescriptor.UncompressedSize): bigint;
+export function getBigUint64(data: DataView, byteOffset: number) {
+    return data.getBigUint64(byteOffset, true);
 }
 
-export class Zip64EndOfCentralDirectoryRecord extends ZipRecord {
-    static readonly fixedLength = 56;
-    static readonly signature = 0x06064b50;
-
-    constructor(buffer: ArrayBuffer, byteOffset: number, init: boolean) {
-        super(buffer, byteOffset, init, Zip64EndOfCentralDirectoryRecord.fixedLength, Zip64EndOfCentralDirectoryRecord.signature);
-    }
-
-    get sizeOfZip64EndOfCentralDirectoryRecord() { return this._data.getBigUint64(4, true); }
-    set sizeOfZip64EndOfCentralDirectoryRecord(value: bigint) { this._data.setBigUint64(4, value, true); }
-
-    get versionMadeBy() { return this._data.getUint16(12, true); }
-    set versionMadeBy(value: number) { this._data.setUint16(12, value, true); }
-
-    get versionNeededToExtract() { return this._data.getUint16(14, true); }
-    set versionNeededToExtract(value: number) { this._data.setUint16(14, value, true); }
-
-    get numberOfThisDisk() { return this._data.getUint32(16, true); }
-    set numberOfThisDisk(value: number) { this._data.setUint32(16, value, true); }
-
-    get numberOfThisDiskWithTheStartOfCentralDirectory() { return this._data.getUint32(20, true); }
-    set numberOfThisDiskWithTheStartOfCentralDirectory(value: number) { this._data.setUint32(20, value, true); }
-
-    get totalNumberOfEntriesInTheCentralDirectoryOnThisDisk() { return this._data.getBigUint64(24, true); }
-    set totalNumberOfEntriesInTheCentralDirectoryOnThisDisk(value: bigint) { this._data.setBigUint64(24, value, true); }
-
-    get totalNumberOfEntriesInTheCentralDirectory() { return this._data.getBigUint64(32, true); }
-    set totalNumberOfEntriesInTheCentralDirectory(value: bigint) { this._data.setBigUint64(32, value, true); }
-
-    get sizeOfTheCentralDirectory() { return this._data.getBigUint64(40, true); }
-    set sizeOfTheCentralDirectory(value: bigint) { this._data.setBigUint64(40, value, true); }
-
-    get offsetOfStartOfCentralDirectoryWithRespectToTheStartingDiskNumber() { return this._data.getBigUint64(48, true); }
-    set offsetOfStartOfCentralDirectoryWithRespectToTheStartingDiskNumber(value: bigint) { this._data.setBigUint64(48, value, true); }
+export function setBigUint64(data: IZip64EndOfCentralDirectoryLocator, byteOffset: Zip64EndOfCentralDirectoryLocator.RelativeOffsetOfTheZip64EndOfCentralDirectoryRecord, value: bigint): void;
+export function setBigUint64(data: IZip64EndOfCentralDirectoryRecord, byteOffset: Zip64EndOfCentralDirectoryRecord.SizeOfZip64EndOfCentralDirectoryRecord | Zip64EndOfCentralDirectoryRecord.TotalNumberOfEntriesInTheCentralDirectoryOnThisDisk | Zip64EndOfCentralDirectoryRecord.TotalNumberOfEntriesInTheCentralDirectory | Zip64EndOfCentralDirectoryRecord.SizeOfTheCentralDirectory | Zip64EndOfCentralDirectoryRecord.OffsetOfStartOfCentralDirectoryWithRespectToTheStartingDiskNumber, value: bigint): void;
+export function setBigUint64(data: IZip64DataDescriptor, byteOffset: Zip64DataDescriptor.CompressedSize | Zip64DataDescriptor.UncompressedSize, value: bigint): void;
+export function setBigUint64(data: DataView, byteOffset: number, value: bigint) {
+    data.setBigUint64(byteOffset, value, true);
 }
 
-export class Zip64EndOfCentralDirectoryLocator extends ZipRecord  {
-    static readonly fixedLength = 20;
-    static readonly signature = 0x07064b50;
+function zipRecord(buffer: ArrayBuffer, byteOffset: number, init: boolean, fixedLength: number, signature?: number)
+{
+    if (buffer.byteLength < fixedLength)
+        throw new Error("Buffer to short");
 
-    constructor(buffer: ArrayBuffer, byteOffset: number, init: boolean) {
-        super(buffer, byteOffset, init, Zip64EndOfCentralDirectoryLocator.fixedLength, Zip64EndOfCentralDirectoryLocator.signature);
-    }
+    const data = new DataView(buffer, byteOffset);
 
-    get numberOfTheDiskWithTheStartOfTheZip64EndOfCentralDirectory() { return this._data.getUint32(4, true); }
-    set numberOfTheDiskWithTheStartOfTheZip64EndOfCentralDirectory(value: number) { this._data.setUint32(4, value, true); }
+    // init header if requested
+    if (init && signature)
+        setUint32(data as any,0, signature);
 
-    get relativeOffsetOfTheZip64EndOfCentralDirectoryRecord() { return this._data.getBigUint64(8, true); }
-    set relativeOffsetOfTheZip64EndOfCentralDirectoryRecord(value: bigint) { this._data.setBigUint64(8, value, true); }
-
-    get totalNumberOfDisks() { return this._data.getUint32(16, true); }
-    set totalNumberOfDisks(value: number) { this._data.setUint32(16, value, true); }
-}
-
-export class EndOfCentralDirectoryRecord extends ZipRecord {
-    static readonly fixedLength = 22;
-    static readonly signature = 0x06054b50;
-
-    constructor(buffer: ArrayBuffer, byteOffset: number, init: boolean) {
-        super(buffer, byteOffset, init, EndOfCentralDirectoryRecord.fixedLength, EndOfCentralDirectoryRecord.signature);
-    }
-
-    get numberOfThisDisk() { return this._data.getUint16(4, true); }
-    set numberOfThisDisk(value: number) { this._data.setUint16(4, value, true); }
-
-    get numberOfThisDiskWithTheStartOfCentralDirectory() { return this._data.getUint16(6, true); }
-    set numberOfThisDiskWithTheStartOfCentralDirectory(value: number) { this._data.setUint16(6, value, true); }
-
-    get totalNumberOfEntriesInTheCentralDirectoryOnThisDisk() { return this._data.getUint16(8, true); }
-    set totalNumberOfEntriesInTheCentralDirectoryOnThisDisk(value: number) { this._data.setUint16(8, value, true); }
-
-    get totalNumberOfEntriesInTheCentralDirectory() { return this._data.getUint16(10, true); }
-    set totalNumberOfEntriesInTheCentralDirectory(value: number) { this._data.setUint16(10, value, true); }
-
-    get sizeOfTheCentralDirectory() { return this._data.getUint32(12, true); }
-    set sizeOfTheCentralDirectory(value: number) { this._data.setUint32(12, value, true); }
-
-    get offsetOfStartOfCentralDirectoryWithRespectToTheStartingDiskNumber() { return this._data.getUint32(16, true); }
-    set offsetOfStartOfCentralDirectoryWithRespectToTheStartingDiskNumber(value: number) { this._data.setUint32(16, value, true); }
-
-    get zipFileCommentLength() { return this._data.getUint16(20, true); }
-    set zipFileCommentLength(value: number) { this._data.setUint16(20, value, true); }
-}
-
-export class Zip64ExtendedInformationExtraField extends ZipRecord {
-    static readonly fixedLength = 4;
-    static readonly tag = 0x0001;
-
-    constructor(buffer: ArrayBuffer, byteOffset: number, init: boolean)
-    {
-        super(buffer, byteOffset, init, Zip64ExtendedInformationExtraField.fixedLength);
-        
-        // init header if requested
-        if (init)
-            this._data.setUint16(0, Zip64ExtendedInformationExtraField.tag, true);
-
-        // validate otherwise
-        if (!init && this._data.getUint16(0, true) !== Zip64ExtendedInformationExtraField.tag)
-            throw new Error("Extra field tag is not matching data tag");
-    }
-
-    get size() { return this._data.getUint16(2, true); }
-    set size(value: number) { this._data.setUint16(2, value, true); }
+    // validate otherwise
+    if (!init && signature && getUint32(data as any, 0) !== signature)
+        throw new Error("Data signature is not matching data type");
+    
+    return data;
 }
