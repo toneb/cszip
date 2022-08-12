@@ -1,6 +1,6 @@
 {
   "name": "@toneb/cszip",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Tiny zip64 (de)compression library for browser, nodejs and deno.",
   "module": "dist/cszip.es.js",
   "types": "dist/cszip.d.ts",

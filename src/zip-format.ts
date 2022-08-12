@@ -52,9 +52,9 @@ export interface IDataDescriptor extends DataView {
 }
 
 export const enum DataDescriptor {
-    Crc32 = 0,
-    CompressedSize = 4,
-    UncompressedSize = 8
+    Crc32 = 4,
+    CompressedSize = 8,
+    UncompressedSize = 12
 }
 
 export function dataDescriptor(buffer: ArrayBuffer, byteOffset: number, init: boolean): IDataDescriptor {
@@ -68,9 +68,9 @@ export interface IZip64DataDescriptor extends DataView {
 }
 
 export const enum Zip64DataDescriptor {
-    Crc32 = 0,
-    CompressedSize = 4,
-    UncompressedSize = 12
+    Crc32 = 4,
+    CompressedSize = 8,
+    UncompressedSize = 16
 }
 
 export function zip64DataDescriptor(buffer: ArrayBuffer, byteOffset: number, init: boolean) {

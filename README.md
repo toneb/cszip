@@ -33,8 +33,8 @@ await largeFile.pipeTo(entry1);
 // add text file via stream writer
 const entry2 = zip.addEntry("README");
 const entry2writer = entry2.getWriter();
-await entry2.write(new TextEncoder().encode("Hello, World!"));
-await entry2.close();
+await entry2writer.write(new TextEncoder().encode("Hello, World!"));
+await entry2writer.close();
 
 // finalize zip file
 await test.close();
