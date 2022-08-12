@@ -200,14 +200,15 @@ export class ZipWriter {
         // generate central directory
         let centralDirectorySize = BigInt(0);
         const zip64 = this._options.zip64 !== false;
+        const version = zip64 ? zipVersion64 : zipVersion;
 
         for (const entry of this._entries)
         {
             // build header
             const headerBuffer = new ArrayBuffer(FieldLength.FileHeader + entry.name.length + (zip64 ? (FieldLength.Zip64ExtendedInformationExtraField + 24 /* zip64 extra field compressed size, uncompressed size, and offset */) : 0));
             const header = fileHeader(headerBuffer, 0, true);
-            setUint16(header, FileHeader.VersionMadeBy, zipVersion);
-            setUint16(header, FileHeader.VersionNeededToExtract, zipVersion);
+            setUint16(header, FileHeader.VersionMadeBy, version);
+            setUint16(header, FileHeader.VersionNeededToExtract, version);
             setUint16(header, FileHeader.GeneralPurposeBitFlag, generalPurposeBitFlags);
             setUint16(header, FileHeader.CompressionMethod, entry.isCompressed ? 8 : 0);
             setUint16(header, FileHeader.LastModFileTime, getDosTime(entry.lastModDate));
@@ -239,8 +240,8 @@ export class ZipWriter {
             const endBuffer = new ArrayBuffer(FieldLength.Zip64EndOfCentralDirectoryRecord + FieldLength.Zip64EndOfCentralDirectoryLocator + FieldLength.EndOfCentralDirectoryRecord);
             const zip64endRecord = zip64EndOfCentralDirectoryRecord(endBuffer, 0, true);
             setBigUint64(zip64endRecord, Zip64EndOfCentralDirectoryRecord.SizeOfZip64EndOfCentralDirectoryRecord, BigInt(FieldLength.Zip64EndOfCentralDirectoryRecord - 12));
-            setUint16(zip64endRecord, Zip64EndOfCentralDirectoryRecord.VersionMadeBy, zipVersion);
-            setUint16(zip64endRecord, Zip64EndOfCentralDirectoryRecord.VersionNeededToExtract, zipVersion);
+            setUint16(zip64endRecord, Zip64EndOfCentralDirectoryRecord.VersionMadeBy, version);
+            setUint16(zip64endRecord, Zip64EndOfCentralDirectoryRecord.VersionNeededToExtract, version);
             setBigUint64(zip64endRecord, Zip64EndOfCentralDirectoryRecord.TotalNumberOfEntriesInTheCentralDirectoryOnThisDisk, BigInt(this._entries.length));
             setBigUint64(zip64endRecord, Zip64EndOfCentralDirectoryRecord.TotalNumberOfEntriesInTheCentralDirectory, BigInt(this._entries.length));
             setBigUint64(zip64endRecord, Zip64EndOfCentralDirectoryRecord.SizeOfTheCentralDirectory, centralDirectorySize);
