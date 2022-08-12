@@ -3,7 +3,7 @@
 // Fixed length part and signatures
 export const enum FieldLength {
     LocalFileHeader = 30,
-    DataDescriptor = 12,
+    DataDescriptor = 16,
     Zip64DataDescriptor = 24,
     FileHeader = 46,
     Zip64EndOfCentralDirectoryRecord = 56,
