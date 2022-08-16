@@ -1,12 +1,15 @@
 {
   "name": "@toneb/cszip",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Tiny zip64 (de)compression library for browser, nodejs and deno.",
-  "module": "dist/cszip.es.js",
-  "types": "dist/cszip.d.ts",
+  "module": "./dist/cszip.es.js",
+  "types": "./dist/cszip.d.ts",
   "files": [
     "dist"
   ],
+  "exports": {
+    ".": "./dist/cszip.es.js"
+  },
   "devDependencies": {
     "dts-bundle-generator": "^6.11.0",
     "typescript": "^4.7.3",
