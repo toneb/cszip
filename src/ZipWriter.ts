@@ -98,6 +98,7 @@ export class ZipWriter {
         let crc = 0;
         let compressWriter: WritableStreamDefaultWriter<BufferSource> | null = null;
         let compressReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+        let compressDoneWriting: Promise<void> | null = null;
 
         if (isCompressed)
         {
@@ -105,7 +106,7 @@ export class ZipWriter {
             compressReader = compressionStream.readable.getReader();
 
             // start processing compressed chunks as they are arriving
-            compressReader.read().then(async function process({ value, done }): Promise<void> {
+            compressDoneWriting = compressReader.read().then(async function process({ value, done }): Promise<void> {
                 if (value) {
                     compressedSize += BigInt(value.byteLength);
                     await zipWriter.ready;
@@ -136,6 +137,7 @@ export class ZipWriter {
             async close() {
                 if (compressWriter) {
                     await compressWriter.close();
+                    await compressDoneWriting;
                     await compressReader!.closed;
                 }
                 else {
